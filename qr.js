@@ -10,19 +10,19 @@ const fs = require("fs-extra");
 const { Boom } = require("@hapi/boom");
 
 const MESSAGE = process.env.MESSAGE || `
-*SESSION GENERATED SUCCESSFULLY* ✅
+🌐 *ʜᴇʏ ᴛʜᴇʀᴇ, ᴀʟɪ-ᴍᴅ ʙᴏᴛ ᴜsᴇʀ! 👋🏻*
 
-*Gɪᴠᴇ ᴀ ꜱᴛᴀʀ ᴛᴏ ʀᴇᴘᴏ ꜰᴏʀ ᴄᴏᴜʀᴀɢᴇ* 🌟
-https://github.com/GuhailTechInfo/MEGA-AI
+✨ *ʏᴏᴜʀ ᴘᴀɪʀɪɴɢ ᴄᴏᴅᴇ / sᴇssɪᴏɴ ɪᴅ ɪs ɢᴇɴᴇʀᴀᴛᴇᴅ!* 🔐
 
-*Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ ꜰᴏʀ ϙᴜᴇʀʏ* 💭
-https://t.me/Global_TechInfo
-https://whatsapp.com/channel/0029VagJIAr3bbVBCpEkAM07
+⚠️ *ᴅᴏ ɴᴏᴛ sʜᴀʀᴇ ᴛʜɪs ᴄᴏᴅᴇ ᴡɪᴛʜ ᴀɴʏᴏɴᴇ — ɪᴛ ɪs ᴘʀɪᴠᴀᴛᴇ!*
 
-*Yᴏᴜ-ᴛᴜʙᴇ ᴛᴜᴛᴏʀɪᴀʟꜱ* 🪄 
-https://youtube.com/GlobalTechInfo
+🪀 *ᴏғғɪᴄɪᴀʟ ᴄʜᴀɴɴᴇʟ:*  
+👉🏻 https://whatsapp.com/channel/0029VaoRxGmJpe8lgCqT1T2h
 
-*MEGA-AI--WHATSAPP* 🥀
+🖇️ *ɢɪᴛʜᴜʙ ʀᴇᴘᴏ:*  
+👉🏻 https://github.com/ALI-INXIDE/ALI-MD
+
+> *ᴍᴀᴅᴇ ᴡɪᴛʜ ʟᴏᴠᴇ ʙʏ ᴀʟɪ ɪɴxɪᴅᴇ 🫶🏻*
 `;
 
 if (fs.existsSync('./auth_info_baileys')) {
@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
               <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Scan QR | MEGA-AI</title>
+                <title>ALI-MD | QR SCAN</title>
                 <style>
                   body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #1e1e1e; color: #fff; font-family: sans-serif; }
                   .container { text-align: center; }
@@ -75,7 +75,7 @@ router.get('/', async (req, res) => {
                   <h1>Scan this QR with WhatsApp</h1>
                   <img src="data:image/png;base64,${qrBase64}" alt="QR Code"/>
                   <p>Session will be generated after scanning.</p>
-                  <p><a href="https://github.com/GuhailTechInfo/MEGA-AI" target="_blank" class="link">Give a Star on Repo 🌟</a></p>
+                  <p><a href="https://github.com/ALI-INXIDE/ALI-MD" target="_blank" class="link">Give a Star on Repo 🌟</a></p>
                 </div>
               </body>
               </html>
