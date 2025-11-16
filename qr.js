@@ -1,70 +1,107 @@
+const { exec } = require("child_process");
+const uploadToPastebin = require('./Paste');
 const express = require('express');
-const router = express.Router();
-const fs = require("fs-extra");
-const { toBuffer } = require("qrcode");
-const uploadToPastebin = require('./Paste');  // Make sure this is correct
+let router = express.Router();
 const pino = require("pino");
-const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay, makeInMemoryStore } = require("@whiskeysockets/baileys");
+let { toBuffer } = require("qrcode");
+const fs = require("fs-extra");
+const path = require("path");
+const { Boom } = require("@hapi/boom");
 
+// MESSAGE
 const MESSAGE = process.env.MESSAGE || `
-👋🏻 *ʜᴇʏ ᴛʜᴇʀᴇ, ᴀʟɪ-ᴍᴅ ʙᴏᴛ ᴜsᴇʀ!*
+*SESSION GENERATED SUCCESSFULY* ✅
 
-✨ *ʏᴏᴜʀ ᴘᴀɪʀɪɴɢ ᴄᴏᴅᴇ / sᴇssɪᴏɴ ɪᴅ ɪs ɢᴇɴᴇʀᴀᴛᴇᴅ!* 
+*Gɪᴠᴇ ᴀ ꜱᴛᴀʀ ᴛᴏ ʀᴇᴘᴏ ꜰᴏʀ ᴄᴏᴜʀᴀɢᴇ* 🌟
+https://github.com/GuhailTechInfo/MEGA-AI
 
-⚠️ *ᴅᴏ ɴᴏᴛ sʜᴀʀᴇ ᴛʜɪs ᴄᴏᴅᴇ ᴡɪᴛʜ ᴀɴʏᴏɴᴇ — ɪᴛ ɪs ᴘʀɪᴠᴀᴛᴇ!*
-
-🪀 *ᴏғғɪᴄɪᴀʟ ᴄʜᴀɴɴᴇʟ:*  
- *Https://whatsapp.com/channel/0029VaoRxGmJpe8lgCqT1T2h*
-
-🖇️ *ɢɪᴛʜᴜʙ ʀᴇᴘᴏ:*  
- *Https://github.com/ALI-INXIDE/ALI-MD*
-
-> *ᴍᴀᴅᴇ ᴡɪᴛʜ ʟᴏᴠᴇ ʙʏ ᴀʟɪ ɪɴxɪᴅᴇ 🍉*
+*Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ ꜰᴏʀ ϙᴜᴇʀʏ*
+https://t.me/Global_TechInfo
+https://whatsapp.com/channel/0029VagJIAr3bbVBCpEkAM07
 `;
 
+// Clear auth folder
 if (fs.existsSync('./auth_info_baileys')) {
-  fs.emptyDirSync('./auth_info_baileys');
+  fs.emptyDirSync(path.join(__dirname, 'auth_info_baileys'));
 }
 
+// Serve QR Page
+router.get('/qr', (req, res) => {
+  res.sendFile(path.join(__dirname, "./qr.html"));
+});
+
+// Serve Latest QR PNG
+router.get('/qr.png', (req, res) => {
+  if (!global.latestQR) return res.send("QR Not Generated Yet!");
+  res.setHeader("Content-Type", "image/png");
+  res.end(global.latestQR);
+});
+
+// Main Route
 router.get('/', async (req, res) => {
-  const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
-  const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
+  const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay, DisconnectReason } = require("@whiskeysockets/baileys");
 
-  const sock = SuhailWASocket({
-    printQRInTerminal: false,
-    logger: pino({ level: "silent" }),
-    browser: Browsers.macOS("Desktop"),
-    auth: state
-  });
+  async function SUHAIL() {
+    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth_info_baileys'));
 
-  sock.ev.on("connection.update", async (update) => {
-    const { connection, qr } = update;
+    try {
+      let Smd = SuhailWASocket({
+        printQRInTerminal: false,
+        logger: pino({ level: "silent" }),
+        browser: Browsers.macOS("Desktop"),
+        auth: state
+      });
 
-    if (qr && !res.headersSent) {
-      try {
-        const qrBuffer = await toBuffer(qr);
-        const qrBase64 = `data:image/png;base64,${qrBuffer.toString('base64')}`;
+      Smd.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
 
-        // Generate fallback session code (Pastebin URL)
-        const credsFile = './auth_info_baileys/creds.json';
-        const sessionCode = await uploadToPastebin(credsFile, 'creds.json', 'json', '1');
+        // When QR is generated
+        if (qr) {
+          const qrBuffer = await toBuffer(qr);
+          global.latestQR = qrBuffer;
 
-        return res.json({
-          success: true,
-          qr: qrBase64,
-          code: sessionCode
-        });
-      } catch (err) {
-        console.error(err);
-        return res.json({ success: false, error: 'Failed to generate QR code' });
-      }
+          if (!res.headersSent) {
+            return res.redirect("/qr");
+          }
+        }
+
+        // When Connected
+        if (connection === "open") {
+          await delay(2000);
+
+          let user = Smd.user.id;
+          const credsPath = path.join(__dirname, 'auth_info_baileys/creds.json');
+
+          const pasteUrl = await uploadToPastebin(credsPath, 'creds.json', 'json', '1');
+
+          await Smd.sendMessage(user, { text: pasteUrl });
+          await Smd.sendMessage(user, { text: MESSAGE });
+
+          await delay(800);
+          fs.emptyDirSync(path.join(__dirname, 'auth_info_baileys'));
+        }
+
+        Smd.ev.on("creds.update", saveCreds);
+
+        // Handle Disconnect
+        if (connection === "close") {
+          let reason = new Boom(lastDisconnect?.error)?.output.statusCode;
+
+          if (reason === DisconnectReason.restartRequired) {
+            return SUHAIL();
+          }
+
+          exec("pm2 restart qasim");
+        }
+      });
+
+    } catch (err) {
+      console.log(err);
+      fs.emptyDirSync(path.join(__dirname, 'auth_info_baileys'));
+      exec("pm2 restart qasim");
     }
+  }
 
-    if (connection === "open") {
-      await delay(3000);
-      sock.ev.on('creds.update', saveCreds);
-    }
-  });
+  await SUHAIL();
 });
 
 module.exports = router;
