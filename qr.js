@@ -1,25 +1,36 @@
 const { exec } = require("child_process");
-const uploadToPastebin = require('./Paste');  // Make sure the function is correctly imported
+const uploadToPastebin = require('./Paste');
 const express = require('express');
 let router = express.Router();
 const pino = require("pino");
 
-let { toBuffer } = require("qrcode");
+const { toBuffer } = require("qrcode");
 const path = require('path');
 const fs = require("fs-extra");
 const { Boom } = require("@hapi/boom");
 
 const MESSAGE = process.env.MESSAGE || `
-*Session id generated for EF-PRIME-MD V2*
+*SESSION GENERATED SUCCESSFULLY* ✅
 
-> Thank you for choosing EF-PRIME-MD V2`;
+*Gɪᴠᴇ ᴀ ꜱᴛᴀʀ ᴛᴏ ʀᴇᴘᴏ ꜰᴏʀ ᴄᴏᴜʀᴀɢᴇ* 🌟
+https://github.com/GuhailTechInfo/MEGA-AI
+
+*Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ ꜰᴏʀ ϙᴜᴇʀʏ* 💭
+https://t.me/Global_TechInfo
+https://whatsapp.com/channel/0029VagJIAr3bbVBCpEkAM07
+
+*Yᴏᴜ-ᴛᴜʙᴇ ᴛᴜᴛᴏʀɪᴀʟꜱ* 🪄 
+https://youtube.com/GlobalTechInfo
+
+*MEGA-AI--WHATSAPP* 🥀
+`;
 
 if (fs.existsSync('./auth_info_baileys')) {
   fs.emptyDirSync(__dirname + '/auth_info_baileys');
 }
 
 router.get('/', async (req, res) => {
-  const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay, DisconnectReason, makeInMemoryStore } = require("baileys");
+  const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay, DisconnectReason, makeInMemoryStore } = require("@whiskeysockets/baileys");
   const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
   async function SUHAIL() {
@@ -36,36 +47,58 @@ router.get('/', async (req, res) => {
       Smd.ev.on("connection.update", async (s) => {
         const { connection, lastDisconnect, qr } = s;
 
+        // ---------------- QR CODE HTML -----------------
         if (qr) {
-          // Ensure the response is only sent once
           if (!res.headersSent) {
-            res.setHeader('Content-Type', 'image/png');
             try {
-              const qrBuffer = (await toBuffer(qr));  // Convert QR to buffer
-              res.end(qrBuffer);  // Send the buffer as the response
-              return; // Exit the function to avoid sending further responses
+              const qrBuffer = await toBuffer(qr);
+              const qrBase64 = qrBuffer.toString('base64');
+
+              const html = `
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Scan QR | MEGA-AI</title>
+                <style>
+                  body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #1e1e1e; color: #fff; font-family: sans-serif; }
+                  .container { text-align: center; }
+                  img { width: 300px; height: 300px; margin-bottom: 20px; }
+                  h1 { margin-bottom: 10px; font-size: 24px; }
+                  p { font-size: 16px; }
+                  .link { color: #4fc3f7; text-decoration: none; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <h1>Scan this QR with WhatsApp</h1>
+                  <img src="data:image/png;base64,${qrBase64}" alt="QR Code"/>
+                  <p>Session will be generated after scanning.</p>
+                  <p><a href="https://github.com/GuhailTechInfo/MEGA-AI" target="_blank" class="link">Give a Star on Repo 🌟</a></p>
+                </div>
+              </body>
+              </html>
+              `;
+              res.setHeader('Content-Type', 'text/html');
+              res.send(html);
+              return;
             } catch (error) {
               console.error("Error generating QR Code buffer:", error);
-              return; // Exit after sending the error response
+              res.status(500).send("Error generating QR Code");
+              return;
             }
           }
         }
 
+        // ---------------- SESSION OPEN -----------------
         if (connection === "open") {
           await delay(3000);
-          let user = Smd.user.id;
+          const user = Smd.user.id;
 
-          //===========================================================================================
-          //===============================  SESSION ID    ===========================================
-          //===========================================================================================
-
-          const auth_path = './auth_info_baileys/';
-          const credsFilePath = auth_path + 'creds.json';
-
-          // Upload the creds.json file to Pastebin directly
+          const credsFilePath = path.join('./auth_info_baileys', 'creds.json');
           const pastebinUrl = await uploadToPastebin(credsFilePath, 'creds.json', 'json', '1');
-          
-          const Scan_Id = pastebinUrl;  // Use the returned Pastebin URL directly
+          const Scan_Id = pastebinUrl;
 
           console.log(`
 ====================  SESSION ID  ==========================
@@ -73,9 +106,8 @@ SESSION-ID ==> ${Scan_Id}
 -------------------   SESSION CLOSED   -----------------------
 `);
 
-          let msgsss = await Smd.sendMessage(user, { text: Scan_Id });
+          const msgsss = await Smd.sendMessage(user, { text: Scan_Id });
           await Smd.sendMessage(user, { text: MESSAGE }, { quoted: msgsss });
-          await delay(1000);
 
           try {
             await fs.emptyDirSync(__dirname + '/auth_info_baileys');
@@ -86,9 +118,9 @@ SESSION-ID ==> ${Scan_Id}
 
         Smd.ev.on('creds.update', saveCreds);
 
+        // ---------------- CONNECTION CLOSE -----------------
         if (connection === "close") {
           let reason = new Boom(lastDisconnect?.error)?.output.statusCode;
-          // Handle disconnection reasons
           if (reason === DisconnectReason.connectionClosed) {
             console.log("Connection closed!");
           } else if (reason === DisconnectReason.connectionLost) {
