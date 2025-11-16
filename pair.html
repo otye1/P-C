@@ -19,13 +19,11 @@
 }
 
 *{margin:0;padding:0;box-sizing:border-box;}
-
 body {
   display:flex; justify-content:center; align-items:center;
   min-height:100vh; background: linear-gradient(135deg,var(--darker) 0%,var(--dark) 100%);
   font-family:'Rajdhani',sans-serif; color:white; overflow:hidden; position:relative;
 }
-
 body::before{
   content:''; position:absolute; top:0; left:0; width:100%; height:100%;
   background:
@@ -33,7 +31,6 @@ body::before{
     radial-gradient(circle at 80% 70%, rgba(192,132,252,0.15) 0%, transparent 50%);
   z-index:-2;
 }
-
 .grid{
   position:absolute; top:0; left:0; width:100%; height:100%;
   background-image: linear-gradient(rgba(255,107,157,0.05) 1px, transparent 1px),
@@ -41,15 +38,12 @@ body::before{
   background-size:30px 30px;
   z-index:-1;
 }
-
 .container{
   display:flex; flex-direction:column; align-items:center; width:100%; padding:20px;
 }
-
 .main{
   position:relative; width:100%; max-width:400px;
 }
-
 .box{
   width:100%; padding:30px; position:relative; text-align:center;
   background: var(--glass); border-radius:20px; backdrop-filter: blur(15px);
@@ -57,9 +51,7 @@ body::before{
     inset 0 1px 0 rgba(255,255,255,0.1);
   transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
-
 .box:hover{transform:rotateY(5deg); box-shadow:0 15px 35px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 20px rgba(255,107,157,0.4);}
-
 .logo{margin-bottom:20px; display:flex; flex-direction:column; align-items:center;}
 .logo-icon{width:60px; height:60px; border-radius:50%; background: linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; margin-bottom:10px; box-shadow:0 0 20px rgba(255,107,157,0.5);}
 .logo-icon img{width:40px;height:40px;border-radius:50%; object-fit:cover;}
@@ -128,7 +120,7 @@ h6{font-size:14px; font-weight:400; color:rgba(255,255,255,0.7); margin-bottom:2
         </div>
         <a id="waiting-message" class="centered-text">Processing...</a>
         <main id="pair"></main>
-        <div id="action-buttons" style="display:none; margin-top:10px; gap:10px; display:flex; justify-content:center;">
+        <div id="action-buttons" style="display:none; margin-top:10px; gap:10px; justify-content:center;">
           <button id="copy-code"><i class="far fa-copy"></i> Copy Code</button>
         </div>
       </div>
@@ -146,9 +138,8 @@ const actionButtons = document.getElementById('action-buttons');
 const btnText = document.getElementById('btn-text');
 const waitingMessage = document.getElementById('waiting-message');
 
-function showResult(msg, type='info') {
-  pairDiv.innerHTML = `<div class="result ${type}">${msg}</div>`;
-  pairDiv.classList.add('show');
+function showResult(msg) {
+  pairDiv.innerHTML = msg;
 }
 
 submitButton.addEventListener('click', async (e) => {
@@ -156,18 +147,18 @@ submitButton.addEventListener('click', async (e) => {
   const number = phoneInput.value.replace(/\D/g, '');
   
   if (!number) {
-    showResult('Please enter your phone number with country code', 'warning');
+    showResult('<p>Please enter your phone number with country code</p>');
     phoneInput.focus();
     return;
   }
   if (number.length < 8) {
-    showResult('Phone number is too short', 'warning');
+    showResult('<p>Phone number is too short</p>');
     return;
   }
 
   submitButton.disabled = true;
-  btnText.innerHTML = '<span class="loader"></span> Generating';
-  pairDiv.classList.remove('show');
+  btnText.innerHTML = 'Generating...';
+  pairDiv.innerHTML = '';
   if (waitingMessage) waitingMessage.style.display = 'block';
 
   try {
@@ -176,15 +167,19 @@ submitButton.addEventListener('click', async (e) => {
     if (waitingMessage) waitingMessage.style.display = 'none';
     
     if (code) {
-      showResult(`<p>Your pairing code is:</p><div class="code-display">${code}</div><p>This code will expire in 1 minute</p>`, 'success');
-      if (actionButtons) actionButtons.style.display = 'flex';
+      showResult(`
+        <p>Your pairing code is:</p>
+        <div class="code-display" id="generated-code">${code}</div>
+        <p>This code will expire in 1 minute</p>
+      `);
+      actionButtons.style.display = 'flex';
       copyButton.dataset.code = code;
     } else {
-      showResult('Service unavailable. Try later.', 'error');
+      showResult('<p>Service unavailable. Try later.</p>');
     }
   } catch(err) {
     if (waitingMessage) waitingMessage.style.display = 'none';
-    showResult(err.response?.data?.message || 'An error occurred. Try again later.', 'error');
+    showResult('<p>An error occurred. Try again later.</p>');
   } finally {
     submitButton.disabled = false;
     btnText.textContent = 'Generate Pair Code';
@@ -195,28 +190,24 @@ copyButton.addEventListener('click', () => {
   const code = copyButton.dataset.code;
   if (!code) return;
 
-  navigator.clipboard.writeText(code).then(() => {
-    copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
-    copyButton.classList.add('copied');
+  navigator.clipboard.writeText(code)
+    .then(() => {
+      copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      copyButton.classList.add('copied');
 
-    const original = pairDiv.innerHTML;
-    pairDiv.innerHTML = `<p>Code copied to clipboard!</p><div class="code-display">${code}</div>`;
-
-    setTimeout(() => {
-      copyButton.innerHTML = '<i class="far fa-copy"></i> Copy Code';
-      copyButton.classList.remove('copied');
-      pairDiv.innerHTML = original;
-    }, 2000);
-  }).catch(() => {
-    showResult('Failed to copy. Copy manually.', 'error');
-  });
+      setTimeout(() => {
+        copyButton.innerHTML = '<i class="far fa-copy"></i> Copy Code';
+        copyButton.classList.remove('copied');
+      }, 2000);
+    })
+    .catch(() => {
+      showResult('<p>Failed to copy. Copy manually.</p>');
+    });
 });
 
-// Optional: lightweight background particles
+// Background particles
 function createParticles(count=30){
   const container = document.getElementById('particles');
-  if (!container) return;
-  
   for (let i = 0; i < count; i++) {
     const p = document.createElement('div');
     p.classList.add('particle');
