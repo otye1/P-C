@@ -1,9 +1,9 @@
 const { exec } = require("child_process");
 const uploadToPastebin = require('./Paste');
 const express = require('express');
-const router = express.Router();
+let router = express.Router();
 const pino = require("pino");
-const { toBuffer } = require("qrcode");
+let { toBuffer } = require("qrcode");
 const fs = require("fs-extra");
 const path = require("path");
 const { Boom } = require("@hapi/boom");
@@ -11,7 +11,11 @@ const { Boom } = require("@hapi/boom");
 // MESSAGE
 const MESSAGE = process.env.MESSAGE || `
 *SESSION GENERATED SUCCESSFULY* ✅
+
+*Gɪᴠᴇ ᴀ ꜱᴛᴀʀ ᴛᴏ ʀᴇᴘᴏ ꜰᴏʀ ᴄᴏᴜʀᴀɢᴇ* 🌟
 https://github.com/GuhailTechInfo/MEGA-AI
+
+*Sᴜᴘᴘᴏʀᴛ Gʀᴏᴜᴘ ꜰᴏʀ ϙᴜᴇʀʏ*
 https://t.me/Global_TechInfo
 https://whatsapp.com/channel/0029VagJIAr3bbVBCpEkAM07
 `;
@@ -26,14 +30,14 @@ router.get('/qr', (req, res) => {
   res.sendFile(path.join(__dirname, "./qr.html"));
 });
 
-// Serve Latest QR as PNG for frontend
-router.get('/server', (req, res) => {
+// Serve Latest QR PNG
+router.get('/qr.png', (req, res) => {
   if (!global.latestQR) return res.send("QR Not Generated Yet!");
   res.setHeader("Content-Type", "image/png");
   res.end(global.latestQR);
 });
 
-// Main Route to start WhatsApp connection
+// Main Route
 router.get('/', async (req, res) => {
   const { default: SuhailWASocket, useMultiFileAuthState, Browsers, delay, DisconnectReason } = require("@whiskeysockets/baileys");
 
@@ -49,18 +53,24 @@ router.get('/', async (req, res) => {
       });
 
       Smd.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
-        // QR Generated
+
+        // When QR is generated
         if (qr) {
           const qrBuffer = await toBuffer(qr);
           global.latestQR = qrBuffer;
-          if (!res.headersSent) return res.redirect("/qr");
+
+          if (!res.headersSent) {
+            return res.redirect("/qr");
+          }
         }
 
-        // Connection Open
+        // When Connected
         if (connection === "open") {
           await delay(2000);
-          const user = Smd.user.id;
+
+          let user = Smd.user.id;
           const credsPath = path.join(__dirname, 'auth_info_baileys/creds.json');
+
           const pasteUrl = await uploadToPastebin(credsPath, 'creds.json', 'json', '1');
 
           await Smd.sendMessage(user, { text: pasteUrl });
@@ -75,7 +85,11 @@ router.get('/', async (req, res) => {
         // Handle Disconnect
         if (connection === "close") {
           let reason = new Boom(lastDisconnect?.error)?.output.statusCode;
-          if (reason === DisconnectReason.restartRequired) return SUHAIL();
+
+          if (reason === DisconnectReason.restartRequired) {
+            return SUHAIL();
+          }
+
           exec("pm2 restart qasim");
         }
       });
