@@ -40,14 +40,23 @@ router.get('/', async (req, res) => {
         const { state, saveCreds } = await useMultiFileAuthState(`./auth_info_baileys`);
         try {
             let Smd = makeWASocket({
-                auth: {
-                    creds: state.creds,
-                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
-                },
-                printQRInTerminal: false,
-                logger: pino({ level: "fatal" }).child({ level: "fatal" }),
-                browser: Browsers.macOS("Safari"),
-            });
+    auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(
+            state.keys,
+            pino({ level: "fatal" }).child({ level: "fatal" })
+        ),
+    },
+    printQRInTerminal: false,
+    logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+
+    // Recommended Browser Spoof
+    browser: Browsers.windows("Chrome"),
+
+    // 🔥 ADD THESE HERE
+    syncFullHistory: false,
+    generateHighQualityLinkPreview: false
+});
 
             if (!Smd.authState.creds.registered) {
                 await delay(1500);
